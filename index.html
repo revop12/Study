@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Notes Manager</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        *{
+            font-family: Poppins;
+        }
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #2b5876;
+}
+
+/* Header */
+.header {
+    background: #4f46e5;
+    color: white;
+    text-align: center;
+    padding: 1rem 0;
+}
+
+/* Subject container */
+.subject-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 20px;
+    gap: 20px;
+}
+
+.subject-card {
+    width: 200px;
+    height: 100px;
+    background: linear-gradient(to right, #6ee7b7, #3b82f6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.subject-card:hover {
+    transform: scale(1.05);
+    transition: 0.3s;
+}
+
+/* PDF container */
+.pdf-container {
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 800px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.button {
+    padding: 10px 20px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.button:hover {
+    background: #1d4ed8;
+}
+
+.pdf-list {
+    margin-top: 20px;
+}
+
+.pdf-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #eff6ff;
+    padding: 10px 15px;
+    border: 1px solid #93c5fd;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.pdf-item button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.pdf-item button:hover {
+    background: #1d4ed8;
+}
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Study Notes Manager</h1>
+    </header>
+    <main>
+        <div class="subject-container">
+            <h2>Select Subjects</h2>
+            <div class="subject-card" data-subject="Physics">Physics</div>
+            <div class="subject-card" data-subject="Chemistry">Chemistry</div>
+            <div class="subject-card" data-subject="IOE">IOE</div>
+            <div class="subject-card" data-subject="English">English</div>
+        </div>
+        <div class="pdf-container" style="display: none;">
+            <h2 id="subject-title"></h2>
+            <button id="add-pdf-btn" class="button">Add PDF</button>
+            <input type="file" id="pdf-input" accept="application/pdf" style="display: none;">
+            <div id="pdf-list" class="pdf-list"></div>
+        </div>
+    </main>
+    <script>
+        // DOM Elements
+const subjectCards = document.querySelectorAll('.subject-card');
+const pdfContainer = document.querySelector('.pdf-container');
+const subjectTitle = document.getElementById('subject-title');
+const addPdfBtn = document.getElementById('add-pdf-btn');
+const pdfInput = document.getElementById('pdf-input');
+const pdfList = document.getElementById('pdf-list');
+
+// Load PDFs for a given subject
+function loadPdfs(subject) {
+    const savedPdfs = JSON.parse(localStorage.getItem(subject)) || [];
+    pdfList.innerHTML = ''; // Clear previous list
+    savedPdfs.forEach((pdf, index) => {
+        const pdfItem = document.createElement('div');
+        pdfItem.classList.add('pdf-item');
+        pdfItem.innerHTML = `
+            <p>${pdf.name}</p>
+            <button onclick="viewPdf('${subject}', ${index})">View</button>
+            <button onclick="deletePdf('${subject}', ${index})">Delete</button>
+        `;
+        pdfList.appendChild(pdfItem);
+    });
+}
+
+// Save PDFs to localStorage
+function savePdfs(subject, pdfs) {
+    localStorage.setItem(subject, JSON.stringify(pdfs));
+}
+
+// View a PDF
+function viewPdf(subject, index) {
+    const savedPdfs = JSON.parse(localStorage.getItem(subject));
+    const pdf = savedPdfs[index];
+    const pdfWindow = window.open(pdf.url, '_blank');
+    pdfWindow.focus();
+}
+
+// Delete a PDF
+function deletePdf(subject, index) {
+    const savedPdfs = JSON.parse(localStorage.getItem(subject));
+    savedPdfs.splice(index, 1);
+    savePdfs(subject, savedPdfs);
+    loadPdfs(subject);
+}
+
+// Add a new PDF
+addPdfBtn.addEventListener('click', () => {
+    pdfInput.click();
+});
+
+pdfInput.addEventListener('change', (event) => {
+    const subject = subjectTitle.textContent;
+    const file = event.target.files[0];
+    if (file && file.type === 'application/pdf') {
+        const savedPdfs = JSON.parse(localStorage.getItem(subject)) || [];
+        savedPdfs.push({ name: file.name, url: URL.createObjectURL(file) });
+        savePdfs(subject, savedPdfs);
+        loadPdfs(subject);
+    } else {
+        alert('Please select a valid PDF file.');
+    }
+});
+
+// Handle subject card clicks
+subjectCards.forEach(card => {
+    card.addEventListener('click', () => {
+        const selectedSubject = card.dataset.subject;
+
+        // Display the PDF management container
+        pdfContainer.style.display = 'block';
+        subjectTitle.textContent = selectedSubject;
+
+        // Load existing PDFs for the selected subject
+        loadPdfs(selectedSubject);
+    });
+});
+
+    </script>
+</body>
+</html>
